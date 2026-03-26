@@ -40,6 +40,11 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
+      - name: setup ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+
       - name: download platform sidecars
         run: node scripts/setup-sidecars.mjs
 
