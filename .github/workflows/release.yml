@@ -8,6 +8,8 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -40,10 +42,15 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - name: setup ffmpeg
+      - name: setup ffmpeg (windows/linux)
+        if: matrix.platform != 'macos-latest'
         uses: FedericoCarboni/setup-ffmpeg@v3
         with:
           ffmpeg-version: release
+
+      - name: setup ffmpeg (macos)
+        if: matrix.platform == 'macos-latest'
+        run: brew install ffmpeg
 
       - name: download platform sidecars
         run: node scripts/setup-sidecars.mjs
