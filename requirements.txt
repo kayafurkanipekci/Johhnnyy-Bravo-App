@@ -1,3 +1,0 @@
-ttkbootstrap
-yt-dlp
-ffmpeg-python

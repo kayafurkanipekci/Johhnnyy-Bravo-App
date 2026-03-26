@@ -1,140 +1,63 @@
-Johnny Bravo Media Tools
+# Johnny Bravo Media Tools v2
 
-A lightweight, modern desktop application for downloading YouTube videos and converting local media files. Built with Python, ttkbootstrap, yt-dlp, and ffmpeg-python.
+A modern, cross-platform desktop application for downloading YouTube media and converting files between formats. Built with **Tauri v2**, **TypeScript**, and **Vite**.
 
-<!-- Add a screenshot -->
+> ⚡ Powered by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ffmpeg](https://ffmpeg.org/) as sidecar binaries — no Python required!
 
-<!--  -->
+## Features
 
-Download (Recommended)
+### YouTube Downloader
+- Download videos in various resolutions (Best, 1080p, 720p, 480p)
+- Extract audio directly to MP3
+- Real-time download progress with speed and ETA
+- Cookie file support for bypassing bot detection
+- **One-click yt-dlp updates** that actually work!
 
-The easiest way to use this application is to download the latest pre-compiled .exe file. This single file runs on any Windows computer and requires no installation or Python setup.
+### File Converter
+Powered by ffmpeg with 20+ conversion options:
 
-Go to the GitHub Releases page to download the latest .exe
+**Video:** MP4 ↔ AVI, MKV ↔ MP4, MOV → MP4, WebM → MP4, FLV → MP4, MP4 → GIF, GIF → MP4
 
-Features
+**Audio:** WAV ↔ MP3, M4A ↔ MP3, FLAC → MP3, OGG → MP3, OPUS → MP3, AAC → MP3, WAV → FLAC
 
-YouTube Downloader:
+**Extract:** Video → MP3, Video → WAV, Video → FLAC
 
-Download videos in various resolutions (Best, 1080p, 720p, etc.).
+**Process:** Video compression
 
-Extract audio directly to MP3.
+## Prerequisites
 
-Real-time download progress bar and stats.
+- [Rust](https://rustup.rs/) (for building the Tauri backend)
+- [Node.js](https://nodejs.org/) v18+
+- ffmpeg installed on your system (`scoop install ffmpeg` or `choco install ffmpeg` on Windows)
 
-Supports using a cookies.txt file to bypass "bot" detection.
+## Setup
 
-File Converter:
+```bash
+# Install dependencies
+npm install
 
-Reliable media conversion powered directly by ffmpeg.
+# Download sidecar binaries (yt-dlp + ffmpeg)
+npm run setup-sidecars
 
-Video-to-Video: MP4, AVI, MKV.
+# Start development server
+npm run tauri dev
+```
 
-Audio-to-Audio: MP3, WAV, M4A.
+## Build for Production
 
-Video-to-Audio: Extract audio (MP3) from any video file.
+```bash
+npm run tauri build
+```
 
-Built-in Updater:
+This creates platform-specific installers in `src-tauri/target/release/bundle/`.
 
-Keep the yt-dlp library up-to-date with a single click.
+## Architecture
 
-How to Use the Cookies Feature (Bypass Bot Blocks)
+- **Frontend:** Vite + Vanilla TypeScript (SPA with hash-based routing)
+- **Backend:** Tauri v2 (Rust) — minimal, handles plugin registration
+- **yt-dlp:** Standalone binary (sidecar) — can self-update via `--update`
+- **ffmpeg:** Standalone binary (sidecar) — handles all media conversion
 
-Sometimes, YouTube may block downloads and show an error like "Sign in to confirm you're not a bot" or fail on age-restricted content.
+## Why Tauri?
 
-Using the "Load Cookies.txt" feature bypasses this. It tells yt-dlp to make the download request as if it were your logged-in browser, not a bot.
-
-Step-by-Step Guide:
-
-Install a Cookie Exporter Extension:
-
-Go to your browser's extension store (Chrome, Firefox, Edge, etc.).
-
-Search for and install an extension named "Cookie-Editor" or "Get cookies.txt".
-
-Go to YouTube:
-
-Open youtube.com in your browser.
-
-Make sure you are logged into your YouTube/Google account.
-
-Export Your Cookies:
-
-Click the icon for the "Cookie-Editor" extension you just installed.
-
-Find the "Export" button.
-
-Choose the format "Export as TXT" (or "Export Cookies as cookies.txt").
-
-This will download a file, usually named cookies.txt or youtube.com_cookies.txt. Save it somewhere safe.
-
-Load Cookies into the App:
-
-Open the "Johnny Bravo Media Tools" application and go to the "YouTube Downloader".
-
-Click the "Load Cookies.txt" button.
-
-Select the cookies.txt file you just downloaded.
-
-Done!
-
-The status label in the app will turn green and say "Active: cookies.txt" (or similar).
-
-You can now download age-restricted videos, private videos (that you have access to), or bypass most "bot" detection errors.
-
-Setup (for Developers)
-
-This section is for users who want to run the application directly from the Python source code.
-
-1. Prerequisites (Crucial!)
-
-Before you run the application, you MUST have ffmpeg installed on your system.
-
-What is ffmpeg?
-
-ffmpeg is the core engine that handles ALL media conversion and merging. Both yt-dlp (for merging video+audio) and the File Converter require it.
-
-How to Install ffmpeg
-
-The easiest way is using a package manager on Windows:
-
-Option 1: Scoop (Recommended)
-
-scoop install ffmpeg
-
-
-Option 2: Chocolatey
-
-choco install ffmpeg
-
-
-If you install it manually, you MUST add the ffmpeg.exe and ffprobe.exe folder (usually C:\ffmpeg\bin) to your system's PATH environment variable.
-
-2. Setup and Running the Source Code
-
-Clone the Repository:
-
-git clone [https://github.com/kayafurkanipekci/Johhnnyy-Bravo-App.git](https://github.com/kayafurkanipekci/Johhnnyy-Bravo-App.git)
-cd Johhnnyy-Bravo-App
-
-
-Create a Stable Python Environment (Recommended):
-This project is tested and stable on Python 3.11 and 3.12. It is not recommended to use Python 3.13+ until all libraries are fully compatible.
-
-# Use a specific, stable Python version (e.g., 3.11) to create the venv
-py -3.11 -m venv venv
-
-# Activate the virtual environment
-.\venv\Scripts\activate
-
-
-Install Dependencies:
-(While your venv is active)
-
-pip install -r requirements.txt
-
-
-Run the Application:
-(While your venv is active)
-
-python main.py
+This project was migrated from Python (ttkbootstrap + PyInstaller) to solve a fundamental problem: **yt-dlp bundled inside a PyInstaller exe cannot update itself**. With Tauri's sidecar approach, yt-dlp runs as a standalone binary that can self-update, making the app always work with YouTube's latest changes.
