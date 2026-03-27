@@ -3,6 +3,7 @@
 import { Command } from '@tauri-apps/plugin-shell';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
+import { openPath as tauriOpenPath, revealItemInDir } from '@tauri-apps/plugin-opener';
 
 // ===================== TYPES =====================
 
@@ -17,7 +18,6 @@ export interface DownloadProgress {
 export interface DownloadOptions {
   type: 'video' | 'audio';
   resolution?: string;
-  cookieFile?: string;
 }
 
 export interface ConvertOptions {
@@ -42,6 +42,15 @@ export async function pickFile(title: string, extensions: string[]): Promise<str
   return result as string | null;
 }
 
+export async function pickMultipleFiles(title: string, extensions: string[]): Promise<string[] | null> {
+  const result = await open({
+    title,
+    multiple: true,
+    filters: [{ name: 'Files', extensions }]
+  });
+  return result as string[] | null;
+}
+
 export async function saveFile(title: string, extensions: string[], defaultName?: string): Promise<string | null> {
   const result = await save({
     title,
@@ -49,6 +58,44 @@ export async function saveFile(title: string, extensions: string[], defaultName?
     defaultPath: defaultName
   });
   return result as string | null;
+}
+
+// ===================== OS COMMANDS =====================
+
+export async function openFileOrFolder(path: string): Promise<boolean> {
+  try {
+    await tauriOpenPath(path);
+    return true;
+  } catch (err) {
+    console.error(`Failed to open path ${path}`, err);
+    return false;
+  }
+}
+
+export async function showItemInFolder(path: string): Promise<boolean> {
+  try {
+    await revealItemInDir(path);
+    return true;
+  } catch (err) {
+    console.error(`Failed to reveal item for ${path}`, err);
+    // Fallback: Just open the parent directory
+    try {
+      if (path && !path.includes('.') && !path.match(/\.[a-zA-Z0-9]+$/)) {
+         // It might already be a directory
+         await tauriOpenPath(path);
+         return true;
+      }
+
+      const parentDir = path.substring(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')));
+      if (parentDir) {
+        await tauriOpenPath(parentDir);
+        return true;
+      }
+    } catch {
+       return false;
+    }
+    return false;
+  }
 }
 
 // ===================== YT-DLP =====================
@@ -101,7 +148,7 @@ export async function startDownloadAsync(
   outputDir: string,
   options: DownloadOptions,
   onProgress: (progress: DownloadProgress) => void,
-  onDone: (success: boolean, message: string) => void
+  onDone: (success: boolean, message: string, finalPath?: string) => void
 ): Promise<{ kill: () => void }> {
   const args: string[] = [];
 
@@ -130,19 +177,34 @@ export async function startDownloadAsync(
   args.push('--newline');
   args.push('--no-colors');
 
-  if (options.cookieFile) {
-    args.push('--cookies', options.cookieFile);
-  }
 
   args.push(url);
 
   let killed = false;
   let childProcess: any = null;
+  let finalDownloadedPath: string | undefined;
+  let alreadyDownloaded = false;
 
   const command = Command.sidecar('binaries/yt-dlp', args);
 
-  command.stdout.on('data', (line: string) => {
+  command.stdout.on('data', (rawLine: string) => {
     if (killed) return;
+    
+    // Safely strip carriage returns that break regex on Windows
+    const line = rawLine.replace(/\r/g, '');
+    
+    // Capture exact filepath
+    if (line.includes('Destination: ')) {
+      finalDownloadedPath = line.split('Destination: ')[1].trim().replace(/^"|"$/g, '');
+    } else if (line.includes('Merging formats into "')) {
+      finalDownloadedPath = line.split('into "')[1].trim().replace(/^"|"$/g, '');
+    } else if (line.includes('has already been downloaded')) {
+      alreadyDownloaded = true;
+      const match = line.match(/\[download\]\s+(.*?)\s+has already been downloaded/);
+      if (match) {
+        finalDownloadedPath = match[1].trim().replace(/^"|"$/g, '');
+      }
+    }
 
     // Parse yt-dlp progress output
     // Example: "[download]  45.2% of ~150.30MiB at 5.23MiB/s ETA 00:15"
@@ -169,12 +231,6 @@ export async function startDownloadAsync(
       return;
     }
 
-    // User requested error handling for already downloaded items
-    if (line.includes('has already been downloaded')) {
-      onDone(false, 'Warning: The file you are trying to download already exists in the selected folder!');
-      return;
-    }
-
     if (line.includes('[ExtractAudio]') || line.includes('Deleting original')) {
       onProgress({
         percent: '100',
@@ -196,7 +252,8 @@ export async function startDownloadAsync(
   command.on('close', (data) => {
     if (killed) return;
     if (data.code === 0) {
-      onDone(true, 'Download completed successfully!');
+      const finalMsg = alreadyDownloaded ? 'File already exists in the selected folder!' : 'Download completed successfully!';
+      onDone(true, finalMsg, finalDownloadedPath);
     } else {
       const errMsg = stderrOutput.trim().split('\n').pop() || `exit code ${data.code}`;
       onDone(false, `Download failed: ${errMsg.slice(0, 200)}`);
@@ -231,7 +288,7 @@ export function startConversion(
   outputPath: string,
   ffmpegArgs: string[],
   onProgress: (percent: number, message: string) => void,
-  onDone: (success: boolean, message: string) => void
+  onDone: (success: boolean, message: string, finalPath?: string) => void
 ): { kill: () => void } {
   // Build full args: -i input [extra args] -progress pipe:1 -y output
   const args = [
@@ -280,7 +337,7 @@ export function startConversion(
   command.on('close', (data) => {
     if (killed) return;
     if (data.code === 0) {
-      onDone(true, 'Conversion completed successfully!');
+      onDone(true, 'Conversion completed successfully!', outputPath);
     } else {
       const errMsg = stderrConv.trim().split('\n').pop() || `exit code ${data.code}`;
       onDone(false, `Conversion failed: ${errMsg.slice(0, 200)}`);

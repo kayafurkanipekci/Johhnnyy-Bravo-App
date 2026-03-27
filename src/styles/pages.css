@@ -79,11 +79,14 @@
 }
 
 .home-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: var(--spacing-lg);
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .home-card {
@@ -99,6 +102,8 @@
   transition: all var(--transition-slow);
   position: relative;
   overflow: hidden;
+  flex: 1 1 200px;
+  max-width: 280px;
 }
 
 .home-card::before {

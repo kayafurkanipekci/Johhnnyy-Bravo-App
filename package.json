@@ -16,7 +16,9 @@
     "@tauri-apps/plugin-fs": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2",
-    "@tauri-apps/plugin-shell": "^2"
+    "@tauri-apps/plugin-shell": "^2",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.5.207"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

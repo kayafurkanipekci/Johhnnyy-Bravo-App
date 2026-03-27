@@ -28,6 +28,27 @@
     "dialog:allow-save",
     "dialog:allow-ask",
     "dialog:allow-message",
-    "fs:default"
+    "fs:default",
+    {
+      "identifier": "fs:allow-read",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write",
+      "allow": [{ "path": "**" }]
+    },
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:read-all",
+    "fs:write-all",
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "opener:allow-reveal-item-in-dir",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }
