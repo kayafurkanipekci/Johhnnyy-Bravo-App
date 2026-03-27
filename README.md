@@ -1,63 +1,65 @@
-# Johnny Bravo Media Tools v2
+# Johnny Bravo Medya Araçları v2
 
-A modern, cross-platform desktop application for downloading YouTube media and converting files between formats. Built with **Tauri v2**, **TypeScript**, and **Vite**.
+YouTube üzerinden medya indirme ve farklı formatlar arasında dosya dönüştürme işlemlerini gerçekleştiren, çapraz platform destekli modern bir masaüstü uygulamasıdır. **Tauri v2**, **TypeScript** ve **Vite** kullanılarak geliştirilmiştir.
 
-> ⚡ Powered by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ffmpeg](https://ffmpeg.org/) as sidecar binaries — no Python required!
+> [yt-dlp](https://github.com/yt-dlp/yt-dlp) ve [ffmpeg](https://ffmpeg.org/) harici ikili dosyalar (sidecar) olarak kullanılmıştır — Python gereksinimi bulunmamaktadır.
 
-## Features
+## Sistem Mimarisi ve Sürüm Geçişi Hakkında Önemli Bilgilendirme
 
-### YouTube Downloader
-- Download videos in various resolutions (Best, 1080p, 720p, 480p)
-- Extract audio directly to MP3
-- Real-time download progress with speed and ETA
-- Cookie file support for bypassing bot detection
-- **One-click yt-dlp updates** that actually work!
+Sistemin eski mimarisi artık güncel değildir ve sistem önceki halinde olduğu gibi çalışmamaktadır. Proje, Python tabanlı (ttkbootstrap + PyInstaller) yapıdan Tauri mimarisine geçirilmiştir. Bunun temel sebebi, PyInstaller içerisine gömülen yt-dlp uygulamasının kendi kendini güncelleyememesidir. Tauri yaklaşımı sayesinde, yt-dlp bağımsız bir uygulama olarak çalışmakta ve kendini güncelleyebilmektedir.
 
-### File Converter
-Powered by ffmpeg with 20+ conversion options:
+Mevcut geliştirme süreci `tauri-migration` dalı üzerinden yürütülmektedir ve bu dal ilerleyen dönemde `main` dalı ile birleştirilecektir. Eski Python sürümünün korunması amacıyla `python` adında yeni bir dal oluşturulacak ve projenin eski hali o dal üzerinde saklanacaktır.
+
+## Özellikler
+
+### YouTube İndirici
+- Videoları çeşitli çözünürlüklerde (En İyi, 1080p, 720p, 480p) indirebilme
+- Sesi doğrudan MP3 formatında çıkarabilme
+- Hız ve tahmini tamamlanma süresi ile gerçek zamanlı indirme durumu gösterimi
+- Bot korumalarını atlatabilmek için çerez (cookie) dosyası desteği
+- Sorunsuz çalışan **tek tıklama ile yt-dlp güncelleme** imkanı
+
+### Dosya Dönüştürücü
+ffmpeg altyapısı ile 20'den fazla dönüştürme seçeneği sunulmaktadır:
 
 **Video:** MP4 ↔ AVI, MKV ↔ MP4, MOV → MP4, WebM → MP4, FLV → MP4, MP4 → GIF, GIF → MP4
 
-**Audio:** WAV ↔ MP3, M4A ↔ MP3, FLAC → MP3, OGG → MP3, OPUS → MP3, AAC → MP3, WAV → FLAC
+**Ses:** WAV ↔ MP3, M4A ↔ MP3, FLAC → MP3, OGG → MP3, OPUS → MP3, AAC → MP3, WAV → FLAC
 
-**Extract:** Video → MP3, Video → WAV, Video → FLAC
+**Ayrıştırma:** Video → MP3, Video → WAV, Video → FLAC
 
-**Process:** Video compression
+**İşlem:** Video sıkıştırma
 
-## Prerequisites
+## Önkoşullar
 
-- [Rust](https://rustup.rs/) (for building the Tauri backend)
-- [Node.js](https://nodejs.org/) v18+
-- ffmpeg installed on your system (`scoop install ffmpeg` or `choco install ffmpeg` on Windows)
+- [Rust](https://rustup.rs/) (Tauri arka plan hizmetlerini derlemek için)
+- [Node.js](https://nodejs.org/) v18 veya üzeri sürüm
+- Sisteminize kurulu ffmpeg (Windows üzerinde `scoop install ffmpeg` veya `choco install ffmpeg` kullanılabilir)
 
-## Setup
+## Kurulum
 
 ```bash
-# Install dependencies
+# Bağımlılıkları yükleyin
 npm install
 
-# Download sidecar binaries (yt-dlp + ffmpeg)
+# Harici ikili dosyaları (yt-dlp + ffmpeg) indirin
 npm run setup-sidecars
 
-# Start development server
+# Geliştirme sunucusunu başlatın
 npm run tauri dev
 ```
 
-## Build for Production
+## Üretim İçin Derleme
 
 ```bash
 npm run tauri build
 ```
 
-This creates platform-specific installers in `src-tauri/target/release/bundle/`.
+Bu işlem, `src-tauri/target/release/bundle/` dizini içerisinde platforma özel kurulum dosyalarını oluşturacaktır.
 
-## Architecture
+## Mimari
 
-- **Frontend:** Vite + Vanilla TypeScript (SPA with hash-based routing)
-- **Backend:** Tauri v2 (Rust) — minimal, handles plugin registration
-- **yt-dlp:** Standalone binary (sidecar) — can self-update via `--update`
-- **ffmpeg:** Standalone binary (sidecar) — handles all media conversion
-
-## Why Tauri?
-
-This project was migrated from Python (ttkbootstrap + PyInstaller) to solve a fundamental problem: **yt-dlp bundled inside a PyInstaller exe cannot update itself**. With Tauri's sidecar approach, yt-dlp runs as a standalone binary that can self-update, making the app always work with YouTube's latest changes.
+- **Önyüz (Frontend):** Vite ve Saf (Vanilla) TypeScript (Hash tabanlı yönlendirme kullanan Tek Sayfa Uygulaması)
+- **Arka Plan (Backend):** Tauri v2 (Rust) — asgari düzeyde eklenti kaydını yönetir
+- **yt-dlp:** Bağımsız ikili dosya (sidecar) — `--update` komutu ile kendini güncelleyebilir
+- **ffmpeg:** Bağımsız ikili dosya (sidecar) — tüm medya dönüştürme işlemlerini üstlenir
