@@ -13,8 +13,8 @@ interface ConversionDef {
   ffmpegArgs: string[];
 }
 
-const VIDEO_FORMATS = ['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv'];
-const AUDIO_FORMATS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'aac', 'opus'];
+const VIDEO_FORMATS = ['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv', 'mpeg', 'mpg', 'm4v', '3gp', 'ts', 'gif'];
+const AUDIO_FORMATS = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'aac', 'opus', 'wma'];
 
 const VIDEO_CONVERSIONS: ConversionDef[] = VIDEO_FORMATS.flatMap(outExt => ({
   label: `To .${outExt.toUpperCase()}`,
@@ -44,12 +44,27 @@ const PROCESSING_CONVERSIONS: ConversionDef[] = [
   { label: 'Create GIF from Video', fromExt: VIDEO_FORMATS, toExt: 'gif', ffmpegArgs: ['-vf', 'fps=12,scale=480:-1:flags=lanczos', '-loop', '0'] }
 ];
 
+const IMAGE_FORMATS = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'ico'];
+const INPUT_ONLY_IMAGE_FORMATS = ['heic', 'heif'];
+
 const IMAGE_CONVERSIONS: ConversionDef[] = [
-  { label: 'HEIC to JPG', fromExt: ['heic', 'heif'], toExt: 'jpg', ffmpegArgs: ['-qscale:v', '2'] },
-  { label: 'HEIC to PNG', fromExt: ['heic', 'heif'], toExt: 'png', ffmpegArgs: ['-c:v', 'png'] },
-  { label: 'PNG to JPG',  fromExt: ['png'],          toExt: 'jpg', ffmpegArgs: ['-qscale:v', '2'] },
-  { label: 'JPG to PNG',  fromExt: ['jpg', 'jpeg'],  toExt: 'png', ffmpegArgs: ['-c:v', 'png'] },
-  { label: 'WEBP to JPG', fromExt: ['webp'],         toExt: 'jpg', ffmpegArgs: ['-qscale:v', '2'] },
+  // Specialized Input Formats (HEIC/HEIF) -> All Standard Outputs
+  ...INPUT_ONLY_IMAGE_FORMATS.flatMap(inExt => IMAGE_FORMATS.map(outExt => ({
+    label: `${inExt.toUpperCase()} to ${outExt.toUpperCase()}`,
+    fromExt: [inExt],
+    toExt: outExt,
+    ffmpegArgs: outExt === 'jpg' || outExt === 'jpeg' ? ['-qscale:v', '2'] : 
+                outExt === 'ico' ? ['-vf', 'scale=256:256'] : []
+  }))),
+  
+  // Dynamic Standard Image Conversions
+  ...IMAGE_FORMATS.flatMap(outExt => ({
+    label: `To .${outExt.toUpperCase()}`,
+    fromExt: IMAGE_FORMATS.filter(ext => ext !== outExt),
+    toExt: outExt,
+    ffmpegArgs: outExt === 'jpg' || outExt === 'jpeg' ? ['-qscale:v', '2'] : 
+                outExt === 'ico' ? ['-vf', 'scale=256:256'] : []
+  }))
 ];
 
 // Combine all for UI mapping
@@ -57,7 +72,7 @@ const CATEGORIES = [
   { id: 'video', title: 'Video Formats', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>', defs: VIDEO_CONVERSIONS },
   { id: 'audio', title: 'Audio Formats', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>', defs: AUDIO_CONVERSIONS },
   { id: 'extract', title: 'Audio Extraction', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>', defs: EXTRACT_CONVERSIONS },
-  { id: 'image', title: 'Image Formats (HEIC)', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', defs: IMAGE_CONVERSIONS },
+  { id: 'image', title: 'Image Formats', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>', defs: IMAGE_CONVERSIONS },
   { id: 'process', title: 'Compression & Codecs', icon: '<svg class="icon-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>', defs: PROCESSING_CONVERSIONS },
 ];
 
@@ -178,17 +193,17 @@ export function createConverterPage(): HTMLElement {
     selIn.addEventListener('change', () => {
       const selectedIn = selIn.value;
       selOut.innerHTML = '<option value="" disabled selected>Select Output...</option>';
-      
+
       // Find all definitions that support this input
       const supportedOuts = category.defs.filter(d => d.fromExt.includes(selectedIn));
-      
+
       supportedOuts.forEach(def => {
         const option = document.createElement('option');
         option.value = def.toExt;
         // Check if it's a special processing codec rather than a simple extension
-        const labelText = def.label.includes('(') || category.id === 'process' 
-                          ? def.label 
-                          : `.${def.toExt.toUpperCase()}`;
+        const labelText = def.label.includes('(') || category.id === 'process'
+          ? def.label
+          : `.${def.toExt.toUpperCase()}`;
         option.textContent = labelText;
         selOut.appendChild(option);
       });
@@ -204,12 +219,12 @@ export function createConverterPage(): HTMLElement {
     btnRun.addEventListener('click', () => {
       const selectedIn = selIn.value;
       const selectedOut = selOut.value;
-      
+
       // In the process category, we might have multiple definitions for the same output ext but the label tells them apart
       // Wait, since we map value=toExt, if there are duplicates (like in process, toExt=mp4 but varying labels), the value alone isn't enough!
       // Let's match by finding the FIRST definition that matches both input AND output. Note: this means process category options must yield unique toExts or we must store index.
       // Let's map by Definition Index to be safe!
-      
+
 
       // Edge case specifically for process where multiple have toExt="mp4".
       // Since we just populated selOut with "value=toExt", we must find it. If there are duplicates, the first one matches.
@@ -288,13 +303,13 @@ export function createConverterPage(): HTMLElement {
       },
       (success, message, finalPath) => {
         isConverting = false;
-        
+
         // Re-enable UI but verify states
         CATEGORIES.forEach(cat => {
           const selIn = page.querySelector(`#sel-in-${cat.id}`) as HTMLSelectElement;
           const selOut = page.querySelector(`#sel-out-${cat.id}`) as HTMLSelectElement;
           const btnRun = page.querySelector(`#btn-run-${cat.id}`) as HTMLButtonElement;
-          
+
           selIn.disabled = false;
           if (selIn.value) {
             selOut.disabled = false;
@@ -306,12 +321,12 @@ export function createConverterPage(): HTMLElement {
           setProgress(100);
           convProgress.classList.add('success');
           setStatus(message, 'success');
-          
+
           cvBtnShowFolder.onclick = () => { import('../lib/tauri-bridge').then(m => m.showItemInFolder(finalPath || outputPath)); };
           cvBtnOpenFile.onclick = () => { import('../lib/tauri-bridge').then(m => m.openFileOrFolder(finalPath || outputPath)); };
           cvBtnOpenFile.style.display = (finalPath || outputPath) ? 'flex' : 'none';
           cvActionResults.style.display = 'flex';
-          
+
         } else {
           convProgress.classList.add('danger');
           setStatus('Failed: ' + message, 'danger');
